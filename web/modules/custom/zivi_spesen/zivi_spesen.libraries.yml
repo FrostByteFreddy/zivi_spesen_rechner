@@ -1,0 +1,17 @@
+dashboard:
+  css:
+    theme:
+      css/dashboard.css: {}
+
+calculator:
+  js:
+    js/expense_calculator.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+
+app_styling:
+  css:
+    theme:
+      //cdn.tailwindcss.com: { type: external, minified: true }
+      css/app.css: {}

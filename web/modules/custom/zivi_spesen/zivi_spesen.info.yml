@@ -1,0 +1,9 @@
+name: "Zivi Spesen Logic"
+type: module
+description: "Custom logic for Zivi Spesen Rechner expense calculations."
+core_version_requirement: ^10
+package: Custom
+dependencies:
+  - drupal:node
+  - drupal:datetime_range
+  - drupal:paragraphs

@@ -1,0 +1,300 @@
+<?php
+
+use Drupal\node\NodeInterface;
+use Drupal\paragraphs\Entity\Paragraph;
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function zivi_spesen_theme() {
+  return [
+    'dashboard_admin' => [
+      'variables' => [
+        'items' => [],
+      ],
+    ],
+    'dashboard_zivi' => [
+      'variables' => [
+        'items' => [],
+      ],
+    ],
+    'page__user__login' => [
+      'template' => 'page--user--login',
+      'variables' => [
+        'page' => [],
+      ],
+    ],
+    'page__user__logout__confirm' => [
+      'template' => 'page--user--login', // Reuse the login template
+      'variables' => [
+        'page' => [],
+      ],
+    ],
+    'page__dashboard' => [
+      'template' => 'page--dashboard',
+      'variables' => ['page' => NULL],
+    ],
+    'expense_report_form' => [
+      'render element' => 'form',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function zivi_spesen_page_attachments(array &$attachments) {
+  $attachments['#attached']['library'][] = 'zivi_spesen/app_styling';
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function zivi_spesen_preprocess_page(&$variables) {
+  // We don't need to unset regions here anymore if we are using custom templates that don't print them.
+  // But keeping it doesn't hurt as a safeguard.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  
+  // Target Login page and Dashboard
+  // Target Login page, Logout Confirm, Dashboard, Add Report, and Edit Report
+  if ($route_name === 'user.login' || $route_name === 'user.logout.confirm' || $route_name === 'zivi_spesen.dashboard' || $route_name === 'zivi_spesen.add_report' || $route_name === 'zivi_spesen.edit_report') {
+    // Remove regions
+    unset($variables['page']['header']);
+    unset($variables['page']['primary_menu']);
+    unset($variables['page']['secondary_menu']);
+    unset($variables['page']['breadcrumb']);
+    unset($variables['page']['highlighted']);
+    unset($variables['page']['help']);
+    unset($variables['page']['footer']);
+    unset($variables['page']['bottom']);
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_page_alter().
+ */
+function zivi_spesen_theme_suggestions_page_alter(array &$suggestions, array $variables) {
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name === 'user.login') {
+    $suggestions[] = 'page__user__login';
+  }
+  if ($route_name === 'user.logout.confirm') {
+    $suggestions[] = 'page__user__logout__confirm';
+  }
+  if ($route_name === 'zivi_spesen.dashboard') {
+    $suggestions[] = 'page__dashboard';
+  }
+  if ($route_name === 'zivi_spesen.add_report' || $route_name === 'zivi_spesen.edit_report') {
+    $suggestions[] = 'page__dashboard'; // Use the same dashboard shell
+  }
+}
+
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function zivi_spesen_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if ($form_id === 'user_login_form') {
+    $form['name']['#attributes']['placeholder'] = t('Username');
+    $form['name']['#description'] = '';
+    $form['pass']['#attributes']['placeholder'] = t('Password');
+    $form['pass']['#description'] = '';
+    $form['#submit'][] = 'zivi_spesen_user_login_form_submit';
+  }
+
+  if ($form_id === 'node_spesenabrechnung_form' || $form_id === 'node_spesenabrechnung_edit_form') {
+    $form['#attached']['library'][] = 'zivi_spesen/calculator';
+
+    // Add a container for the live preview.
+    $form['calculation_preview'] = [
+      '#type' => 'markup',
+      '#markup' => '<div id="spesen-preview" class="spesen-preview"></div>',
+      '#weight' => 10,
+    ];
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_create() for node entities.
+ */
+function zivi_spesen_node_create(NodeInterface $node) {
+  if ($node->getType() !== 'spesenabrechnung') {
+    return;
+  }
+
+  // Set default date range to current month.
+  $start_date = new DrupalDateTime('first day of this month');
+  $end_date = new DrupalDateTime('last day of this month');
+  
+  $node->set('field_date_range', [
+    'value' => $start_date->format('Y-m-d'),
+    'end_value' => $end_date->format('Y-m-d'),
+  ]);
+
+  // Pre-populate standard expense items.
+  $rates = [
+    'Taschengeld' => 7.50,
+    'Morgenessen' => 4.00,
+    'Mittagessen' => 9.00,
+    'Nachtessen' => 7.00,
+  ];
+
+  // Calculate initial days (inclusive).
+  $interval = $start_date->diff($end_date);
+  $days = $interval->days + 1;
+
+  foreach ($rates as $type => $rate) {
+    $quantity = $days;
+    // Special case: Nachtessen is Total Days - 1
+    if ($type === 'Nachtessen') {
+      $quantity = max(0, $days - 1);
+    }
+
+    $paragraph = Paragraph::create([
+      'type' => 'expense_line_item',
+      'field_item_type' => $type,
+      'field_rate' => $rate,
+      'field_quantity' => $quantity,
+      'field_total_amount' => $rate * $quantity,
+    ]);
+    // We don't save the paragraph here because the node isn't saved yet.
+    // But for the form to show it, it needs to be in the field.
+    // Actually, for the "Add" form, we usually need to rely on the form state or just setting it on the node object works if it's a fresh create?
+    // Yes, setting it on the node object passed to the form works.
+    $node->get('field_expense_items')->appendItem($paragraph);
+  }
+}
+
+/**
+ * Implements hook_node_presave().
+ */
+function zivi_spesen_node_presave(NodeInterface $node) {
+  if ($node->getType() !== 'spesenabrechnung') {
+    return;
+  }
+
+  // Rates configuration.
+  $rates = [
+    'taschengeld' => 7.50,
+    'morgenessen' => 4.00,
+    'mittagessen' => 9.00,
+    'nachtessen' => 7.00,
+    'ov_sonstiges' => 6.80,
+  ];
+
+  // Get date range.
+  $date_range = $node->get('field_date_range')->first();
+  if (!$date_range) {
+    return;
+  }
+
+  $start_date = $date_range->get('value')->getDateTime();
+  $end_date = $date_range->get('end_value')->getDateTime();
+
+  // Calculate duration in days (inclusive).
+  $interval = $start_date->diff($end_date);
+  $days = $interval->days + 1;
+
+  // 1. Handle Auto-Generated Items
+  // We want to update existing auto-generated items or create them if missing.
+  // We identify them by 'field_item_type'.
+  
+  $existing_items = $node->get('field_expense_items')->referencedEntities();
+  $auto_types = array_keys($rates);
+  $processed_types = [];
+
+  // Remove existing auto-generated items to regenerate them with fresh calculations
+  // This is simpler than updating in place and ensures correctness if dates change.
+  // However, we must preserve MANUAL items.
+  
+  $manual_items = [];
+  foreach ($existing_items as $paragraph) {
+    $type_value = $paragraph->get('field_item_type')->value;
+    // Map the readable key back if needed, or check if it matches one of our keys (case insensitive or mapped)
+    // Our setup script used keys like 'Taschengeld', 'Morgenessen'.
+    // Let's assume the keys in $rates match the keys stored in field_item_type (which we set up as 'Taschengeld' etc).
+    
+    // Check if this is a standard rate item.
+    $is_standard = false;
+    foreach ($rates as $key => $rate) {
+       // Simple mapping check: 'Taschengeld' matches 'taschengeld' key? 
+       // In setup_config.php we used 'Taschengeld' => 'Taschengeld'.
+       // So we compare against the values we know we generate.
+       $generated_labels = [
+         'Taschengeld', 'Morgenessen', 'Mittagessen', 'Nachtessen', 'OV/Sonstiges'
+       ];
+       if (in_array($type_value, $generated_labels)) {
+         $is_standard = true;
+         break;
+       }
+    }
+
+    if (!$is_standard) {
+      $manual_items[] = $paragraph;
+    } else {
+      // It's an auto-item, we will discard it and regenerate.
+      // Note: If we wanted to keep manual overrides on auto-items, we'd need more complex logic.
+      // Requirement says "Auto-Calculation", implying it follows the dates.
+    }
+  }
+
+  // Clear the field.
+  $node->set('field_expense_items', []);
+
+  // Re-add manual items.
+  foreach ($manual_items as $item) {
+    $node->get('field_expense_items')->appendItem($item);
+  }
+
+  // Generate new standard items.
+  $items_to_create = [
+    'Taschengeld' => $rates['taschengeld'],
+    'Morgenessen' => $rates['morgenessen'],
+    'Mittagessen' => $rates['mittagessen'],
+    'Nachtessen' => $rates['nachtessen'],
+    'OV/Sonstiges' => $rates['ov_sonstiges'],
+  ];
+
+  foreach ($items_to_create as $type => $rate) {
+    $quantity = $days;
+    // Special case: Nachtessen is Total Days - 1
+    if ($type === 'Nachtessen') {
+      $quantity = max(0, $days - 1);
+    }
+
+    $paragraph = Paragraph::create([
+      'type' => 'expense_line_item',
+      'field_item_type' => $type,
+      'field_rate' => $rate,
+      'field_quantity' => $quantity,
+      'field_total_amount' => $rate * $quantity,
+    ]);
+    $paragraph->save();
+    $node->get('field_expense_items')->appendItem($paragraph);
+  }
+
+  // 2. Calculate Total Sum
+  // We need to re-fetch the referenced entities because we just added new ones.
+  // Note: appendItem adds to the list but doesn't immediately make referencedEntities() return the new objects if they aren't saved/reloaded?
+  // Actually, since we saved the paragraphs, they have IDs.
+  
+  $total_sum = 0;
+  $all_items = $node->get('field_expense_items')->referencedEntities();
+  
+  foreach ($all_items as $item) {
+    $amount = $item->get('field_total_amount')->value;
+    $total_sum += $amount;
+  }
+
+  $node->set('field_total_sum', $total_sum);
+}
+
+/**
+ * Custom submit handler for user login form.
+ */
+function zivi_spesen_user_login_form_submit($form, FormStateInterface $form_state) {
+  $form_state->setRedirect('zivi_spesen.dashboard');
+}

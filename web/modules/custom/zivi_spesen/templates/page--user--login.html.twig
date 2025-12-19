@@ -1,0 +1,17 @@
+{#
+/**
+ * @file
+ * Custom page template for user login.
+ * Removes all regions except content.
+ */
+#}
+<div class="layout-container">
+  <main role="main">
+    <a id="main-content" tabindex="-1"></a>
+    <div class="layout-content">
+      <div class="region region-content">
+        {{ page.content }}
+      </div>
+    </div>
+  </main>
+</div>

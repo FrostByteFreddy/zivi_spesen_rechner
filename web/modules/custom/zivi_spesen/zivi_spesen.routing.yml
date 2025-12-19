@@ -1,0 +1,23 @@
+zivi_spesen.dashboard:
+  path: "/dashboard"
+  defaults:
+    _controller: '\Drupal\zivi_spesen\Controller\DashboardController::content'
+    _title: "Dashboard"
+  requirements:
+    _permission: "access content"
+
+zivi_spesen.add_report:
+  path: "/dashboard/add"
+  defaults:
+    _form: '\Drupal\zivi_spesen\Form\ExpenseReportForm'
+    _title: "Create Expense Report"
+  requirements:
+    _permission: "create spesenabrechnung content"
+
+zivi_spesen.edit_report:
+  path: "/dashboard/edit/{node}"
+  defaults:
+    _form: '\Drupal\zivi_spesen\Form\ExpenseReportForm'
+    _title: "Edit Expense Report"
+  requirements:
+    _permission: "edit own spesenabrechnung content"

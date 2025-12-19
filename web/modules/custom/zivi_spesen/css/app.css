@@ -1,0 +1,367 @@
+/* Global App Styles */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+body {
+  font-family: "Inter", sans-serif !important;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Login Page Styling --- */
+/* We target the specific body classes added by Drupal */
+body.path-user.user-logged-out {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  background: linear-gradient(
+    135deg,
+    #4f46e5 0%,
+    #06b6d4 100%
+  ) !important; /* Vibrant Indigo to Cyan */
+  background-size: cover !important;
+}
+
+/* Layout Container - Centers the card */
+body.path-user.user-logged-out .layout-container {
+  width: 100% !important;
+  max-width: 420px !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+/* The Card */
+body.path-user.user-logged-out .region-content {
+  background: rgba(255, 255, 255, 0.95) !important; /* Slight transparency */
+  backdrop-filter: blur(10px) !important;
+  padding: 2.5rem !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo/Title */
+body.path-user.user-logged-out .region-content::before {
+  content: "Zivi Dashboard";
+  display: block;
+  text-align: center;
+  font-size: 1.875rem; /* 30px */
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.025em;
+}
+
+body.path-user.user-logged-out .region-content::after {
+  content: "Sign in to manage your expenses";
+  display: block;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+/* Form Elements */
+body.path-user.user-logged-out .form-item {
+  margin-bottom: 1.5rem !important;
+}
+
+body.path-user.user-logged-out label {
+  display: block !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+body.path-user.user-logged-out input.form-text,
+body.path-user.user-logged-out input.form-email,
+body.path-user.user-logged-out input.form-password {
+  display: block !important;
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  color: #111827 !important;
+  background-color: #fff !important;
+  background-clip: padding-box !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.5rem !important;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+  box-sizing: border-box !important;
+}
+
+body.path-user.user-logged-out input:focus {
+  border-color: #4f46e5 !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important; /* Indigo focus ring */
+}
+
+/* Button */
+body.path-user.user-logged-out .form-actions {
+  margin-top: 2rem !important;
+  margin-bottom: 0 !important;
+}
+
+body.path-user.user-logged-out .button--primary {
+  display: inline-block !important;
+  width: 100% !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  user-select: none !important;
+  background-color: #4f46e5 !important; /* Indigo 600 */
+  border: 1px solid transparent !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  border-radius: 0.5rem !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease-in-out, transform 0.1s ease !important;
+  text-decoration: none !important;
+}
+
+body.path-user.user-logged-out .button--primary:hover {
+  background-color: #4338ca !important; /* Indigo 700 */
+  transform: translateY(-1px);
+}
+
+body.path-user.user-logged-out .button--primary:active {
+  transform: translateY(0);
+}
+
+/* Hide extra Drupal links if they sneak in */
+body.path-user.user-logged-out .more-links,
+body.path-user.user-logged-out .forgot-password {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+body.path-user.user-logged-out a {
+  color: #4f46e5 !important;
+  text-decoration: none !important;
+}
+
+body.path-user.user-logged-out a:hover {
+  text-decoration: underline !important;
+}
+
+/* Dashboard Tweaks */
+body.path-dashboard {
+  background-color: #f3f4f6 !important;
+}
+
+body.path-dashboard .app-header {
+  background: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+}
+
+body.path-dashboard .app-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.path-dashboard .dashboard-container {
+  max-width: 1200px; /* Increased from 1000px */
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+body.path-dashboard .app-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+body.path-dashboard .button--secondary {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+body.path-dashboard .button--secondary:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  text-decoration: none !important;
+}
+
+body.path-dashboard .layout-container {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 1.5rem !important;
+}
+
+/* --- Expense Form Table Styling --- */
+/* Target the paragraphs widget table */
+.field--name-field-expense-items table,
+.expense-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  table-layout: fixed; /* Enforce column widths */
+}
+
+.field--name-field-expense-items th,
+.expense-table th {
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.field--name-field-expense-items td,
+.expense-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle; /* Align inputs vertically */
+}
+
+.field--name-field-expense-items tr:last-child td {
+  border-bottom: none;
+}
+
+/* Hide field labels inside the table cells to clean it up */
+.field--name-field-expense-items td .form-item label {
+  display: none !important;
+}
+
+/* Make inputs look cleaner in the table */
+/* --- Expense Form Header --- */
+.expense-form-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-end; /* Align labels and inputs */
+}
+
+.expense-form-header .form-item {
+  margin-bottom: 0;
+}
+
+.expense-date-start,
+.expense-date-end {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.field--name-field-expense-items input.form-text,
+.field--name-field-expense-items input.form-number {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Specific column widths if needed */
+.field--name-field-expense-items td.field-multiple-drag {
+  width: 30px; /* Minimize drag handle column */
+}
+
+/* Total Sum Field Styling */
+.field--name-field-total-sum {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.field--name-field-total-sum label {
+  margin-right: 1rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.field--name-field-total-sum input {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669; /* Green */
+  width: 150px;
+  text-align: right;
+  background: transparent;
+  border: none;
+}
+
+/* Custom Form Specifics */
+.expense-table .form-item {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.expense-table input.expense-type-input,
+.expense-table input.expense-rate-input,
+.expense-table input.expense-quantity,
+.expense-table input.expense-total {
+  width: 100%;
+  min-width: 0; /* Allow shrinking if needed */
+}
+
+.expense-table .expense-receipt {
+  font-size: 0.875rem;
+}
+
+.expense-table .expense-receipt input[type="file"] {
+  max-width: 200px;
+}
+
+.expense-table .file {
+  font-size: 0.75rem;
+}
+
+/* Fix Olivero Grid Restriction */
+body.path-dashboard .block-olivero-content {
+  grid-column: auto !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+body.path-dashboard .region-content {
+  background: white !important;
+  padding: 2rem !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
