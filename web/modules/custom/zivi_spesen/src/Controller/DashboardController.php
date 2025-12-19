@@ -47,22 +47,25 @@ class DashboardController extends ControllerBase {
         ],
       ];
 
-      if ($status === 'Approved') {
-        // Link to Entity Print PDF export.
-        $actions['pdf'] = [
-          'title' => 'Download PDF',
-          'url' => Url::fromRoute('entity_print.view.export', [
-            'export_type' => 'pdf',
-            'entity_type' => 'node',
-            'entity_id' => $node->id(),
-          ])->toString(),
-        ];
-      } else {
-        // Allow editing if not approved (or maybe always? Let's restrict Approved for safety)
-        // Actually, let's allow editing for Draft and Submitted.
+      // Link to Entity Print PDF export.
+      $actions['pdf'] = [
+        'title' => 'Download PDF',
+        'url' => Url::fromRoute('entity_print.view', [
+          'export_type' => 'pdf',
+          'entity_type' => 'node',
+          'entity_id' => $node->id(),
+        ])->toString(),
+      ];
+
+      if ($status !== 'Approved') {
+        // Allow editing/deleting if not approved
         $actions['edit'] = [
           'title' => 'Edit',
           'url' => Url::fromRoute('zivi_spesen.edit_report', ['node' => $node->id()])->toString(),
+        ];
+        $actions['delete'] = [
+          'title' => 'Delete',
+          'url' => Url::fromRoute('entity.node.delete_form', ['node' => $node->id()])->toString(),
         ];
       }
 
@@ -86,6 +89,9 @@ class DashboardController extends ControllerBase {
             'zivi_spesen/dashboard',
           ],
         ],
+        '#cache' => [
+          'max-age' => 0,
+        ],
       ];
     }
     else {
@@ -96,6 +102,9 @@ class DashboardController extends ControllerBase {
           'library' => [
             'zivi_spesen/dashboard',
           ],
+        ],
+        '#cache' => [
+          'max-age' => 0,
         ],
       ];
     }

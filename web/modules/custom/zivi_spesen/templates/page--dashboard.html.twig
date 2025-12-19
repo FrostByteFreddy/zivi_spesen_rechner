@@ -2,25 +2,39 @@
 /**
  * @file
  * Custom page template for dashboard.
- * Removes all regions except content.
  */
 #}
-<div class="layout-container">
-  <header role="banner" class="app-header">
-    <div class="app-header-inner">
-      <div class="app-logo">Zivi Dashboard</div>
-      <nav class="app-nav">
-        <a href="/user/logout" class="button button--small button--secondary">Logout</a>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body {
+    background-image: none !important;
+    background-color: #f9fafb !important; /* gray-50 */
+  }
+  #content {
+    display: unset !important;
+  }
+  /* Fix button styles to prevent bold on hover */
+  input[type="submit"], button, .button, a.button {
+    font-weight: 500 !important; /* font-medium */
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="submit"]:hover, button:hover, .button:hover, a.button:hover {
+    font-weight: 500 !important;
+  }
+</style>
+<div class="min-h-screen bg-gray-50 font-sans">
+  <header role="banner" class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="text-xl font-bold text-gray-900">Zivi Dashboard</div>
+      <nav class="flex gap-4">
+        <a href="/user/logout" class="text-sm font-medium text-gray-500 hover:text-gray-900">Logout</a>
       </nav>
     </div>
   </header>
 
-  <main role="main">
-    <a id="main-content" tabindex="-1"></a>
-    <div class="layout-content">
-      <div class="region region-content">
-        {{ page.content }}
-      </div>
+  <main role="main" class="py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {{ page.content }}
     </div>
   </main>
 </div>

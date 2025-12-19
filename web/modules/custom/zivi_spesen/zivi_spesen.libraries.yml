@@ -1,6 +1,7 @@
 dashboard:
   css:
     theme:
+      //cdn.tailwindcss.com: { type: external, minified: true }
       css/dashboard.css: {}
 
 calculator:

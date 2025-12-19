@@ -21,8 +21,10 @@
 
       // Main update function.
       function updateCalculations() {
-        const startVal = $(".expense-date-start", context).val();
-        const endVal = $(".expense-date-end", context).val();
+        // Date fields are in the header, so we must search globally, not just in context
+        // because context might be an AJAX fragment (new row).
+        const startVal = $(".expense-date-start").val();
+        const endVal = $(".expense-date-end").val();
 
         if (!startVal || !endVal) return;
 
@@ -33,37 +35,37 @@
 
         const days = calculateDays(startDate, endDate);
 
-        // Update Standard Rows
-        // We iterate over rows that have a hidden .expense-type input
-        $(".expense-table tr", context).each(function () {
-          const $row = $(this);
-          const type = $row.find(".expense-type").val();
+        // Iterate over each "row" (which is now a grid container)
+        // We can identify rows by looking for the quantity input
+        $(".expense-quantity", context).each(function () {
+          const $qtyInput = $(this);
+          const $row = $qtyInput.closest(".grid"); // Tailwind grid container
 
-          if (type) {
-            // Standard Row
-            let quantity = days;
-            if (type === "Nachtessen") {
-              quantity = Math.max(0, days - 1);
-            }
+          // Check if it's a standard row (has hidden type input)
+          const $typeInput = $row.find(".expense-type");
 
-            $row.find(".expense-quantity").val(quantity);
+          if ($typeInput.length) {
+            // Standard Row: Update Quantity automatically
+            // User requested: "always set the quantity to the length of the month"
+            // So we set it to 'days' for ALL standard items.
+            $qtyInput.val(days);
 
+            // Update Total
             const rate = parseFloat($row.find(".expense-rate").val());
-            const total = (quantity * rate).toFixed(2);
-
+            const total = (days * rate).toFixed(2);
             $row.find(".expense-total").val(total);
           } else {
-            // Custom Row? Check if it has inputs
-            const $rateInput = $row.find(".expense-rate-input");
-            const $qtyInput = $row.find(".expense-quantity");
-            const $totalInput = $row.find(".expense-total");
+            // Custom Row: Just re-calculate total based on current inputs (don't auto-set qty)
+            // Unless we want to? "Can we always set the quntity to the length of the month?"
+            // Usually custom rows are for specific things like "Train Ticket" (qty 1).
+            // So we should probably ONLY auto-update standard rows.
 
-            if ($rateInput.length && $qtyInput.length) {
-              // Calculate total for custom row based on user input
+            const $rateInput = $row.find(".expense-rate-input");
+            if ($rateInput.length) {
               const rate = parseFloat($rateInput.val()) || 0;
               const qty = parseFloat($qtyInput.val()) || 0;
               const total = (rate * qty).toFixed(2);
-              $totalInput.val(total);
+              $row.find(".expense-total").val(total);
             }
           }
         });
@@ -88,13 +90,26 @@
         updateCalculations
       );
 
-      // Listen for changes in custom rows to update totals
-      $(".expense-rate-input, .expense-quantity", context).on(
+      // Listen for changes in inputs to update totals
+      // Use event delegation or direct attach if elements exist
+      $(context).on(
         "change keyup",
+        ".expense-rate-input, .expense-quantity",
         function () {
-          // Update the specific row total first
-          const $row = $(this).closest("tr");
-          const rate = parseFloat($row.find(".expense-rate-input").val()) || 0;
+          const $input = $(this);
+          const $row = $input.closest(".grid");
+
+          const rateInput = $row.find(".expense-rate-input");
+          // Only for custom rows (standard rows are read-only/auto mostly, but if user edits qty manually?)
+          // If it's a standard row, we have .expense-rate hidden.
+
+          let rate = 0;
+          if (rateInput.length) {
+            rate = parseFloat(rateInput.val()) || 0;
+          } else {
+            rate = parseFloat($row.find(".expense-rate").val()) || 0;
+          }
+
           const qty = parseFloat($row.find(".expense-quantity").val()) || 0;
           const total = (rate * qty).toFixed(2);
           $row.find(".expense-total").val(total);
@@ -104,7 +119,10 @@
       );
 
       // Run on load
-      updateCalculations();
+      // We might need a slight delay or check if values are present
+      if ($(".expense-date-start").val() && $(".expense-date-end").val()) {
+        updateCalculations();
+      }
     },
   };
 })(jQuery, Drupal);

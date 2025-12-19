@@ -21,3 +21,11 @@ zivi_spesen.edit_report:
     _title: "Edit Expense Report"
   requirements:
     _permission: "edit own spesenabrechnung content"
+
+zivi_spesen.profile:
+  path: "/dashboard/profile"
+  defaults:
+    _form: '\Drupal\zivi_spesen\Form\UserProfileForm'
+    _title: "Mein Profil"
+  requirements:
+    _permission: "access content"

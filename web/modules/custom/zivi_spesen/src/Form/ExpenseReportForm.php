@@ -28,6 +28,7 @@ class ExpenseReportForm extends FormBase {
     $form['#theme'] = 'expense_report_form';
     $form['#attached']['library'][] = 'zivi_spesen/calculator';
     $form['#attached']['library'][] = 'zivi_spesen/app_styling';
+    $form['#cache']['max-age'] = 0;
     
     // Store node in form state for submit handler
     if ($node) {
@@ -125,53 +126,72 @@ class ExpenseReportForm extends FormBase {
         $default_total = $existing_data[$label]['total'];
       }
 
-      // Cell 1: Item
-      $form['expenses'][$key]['item'] = [
-        'wrapper' => [
-          '#type' => 'container',
-          'label' => ['#markup' => '<strong>' . $label . '</strong>'],
-          'type_hidden' => [
-            '#type' => 'hidden',
-            '#value' => $label,
-            '#attributes' => ['class' => ['expense-type']],
-          ],
+      // Row Container
+      $form['expenses'][$key] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['grid', 'grid-cols-12', 'gap-4', 'items-center', 'border-b', 'border-gray-100']],
+      ];
+
+      // Cell 1: Item (3 cols)
+      $form['expenses'][$key]['item_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-3', 'font-medium', 'text-gray-900']],
+        'label' => ['#markup' => $label],
+        'type_hidden' => [
+          '#type' => 'hidden',
+          '#value' => $label,
+          '#attributes' => ['class' => ['expense-type']],
         ],
       ];
 
-      // Cell 2: Rate
-      $form['expenses'][$key]['rate_col'] = [
-        'wrapper' => [
-          '#type' => 'container',
-          'display' => ['#markup' => number_format($rate, 2)],
-          'rate_hidden' => [
-            '#type' => 'hidden',
-            '#value' => $rate,
-            '#attributes' => ['class' => ['expense-rate']],
-          ],
+      // Cell 2: Rate (2 cols)
+      $form['expenses'][$key]['rate_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2', 'text-gray-600']],
+        'display' => ['#markup' => number_format($rate, 2)],
+        'rate_hidden' => [
+          '#type' => 'hidden',
+          '#value' => $rate,
+          '#attributes' => ['class' => ['expense-rate']],
         ],
       ];
 
-      // Cell 3: Quantity
-      $form['expenses'][$key]['quantity'] = [
-        '#type' => 'number',
-        '#title' => $this->t('Days'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_qty,
-        '#attributes' => ['class' => ['expense-quantity'], 'min' => 0],
+      // Cell 3: Quantity (2 cols)
+      $form['expenses'][$key]['quantity_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+        'quantity' => [
+          '#type' => 'number',
+          '#title' => $this->t('Days'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_qty,
+          '#attributes' => ['class' => ['expense-quantity', 'w-full', 'rounded-md', 'border-gray-300', 'shadow-sm', 'focus:border-indigo-500', 'focus:ring-indigo-500', 'sm:text-sm'], 'min' => 0],
+        ],
       ];
 
-      // Cell 4: Total
-      $form['expenses'][$key]['total'] = [
-        '#type' => 'textfield', // Textfield to allow decimals easily
-        '#title' => $this->t('Total'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_total,
-        '#attributes' => ['class' => ['expense-total'], 'readonly' => 'readonly'],
+      // Cell 4: Total (2 cols)
+      $form['expenses'][$key]['total_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+        'total' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('Total'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_total,
+          '#attributes' => ['class' => ['expense-total', 'w-full', 'rounded-md', 'border-gray-300', 'bg-gray-50', 'text-right'], 'readonly' => 'readonly'],
+        ],
       ];
       
-      // Cell 5: Receipt (Empty for standard)
-      $form['expenses'][$key]['receipt'] = [
-        '#markup' => '',
+      // Cell 5: Receipt (2 cols) - Empty
+      $form['expenses'][$key]['receipt_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+      ];
+
+      // Cell 6: Actions (1 col) - Empty
+      $form['expenses'][$key]['actions_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-1']],
       ];
     }
 
@@ -181,8 +201,6 @@ class ExpenseReportForm extends FormBase {
     // Initialize row count
     if (!$form_state->has('custom_row_count')) {
       $initial_count = count($custom_rows_data);
-      // If creating new report, start with 0 custom rows (as requested: "The additional rows should not be displayed")
-      // If editing, start with existing count.
       $form_state->set('custom_row_count', $initial_count);
     }
     
@@ -211,54 +229,98 @@ class ExpenseReportForm extends FormBase {
         }
       }
       
-      // Cell 1: Item Input
-      $form['expenses'][$key]['item'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Description'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_desc,
-        '#attributes' => ['class' => ['expense-type-input'], 'placeholder' => 'Description (e.g. Train Ticket)'],
-      ];
-      
-      // Cell 2: Rate Input
-      $form['expenses'][$key]['rate_col'] = [
-        '#type' => 'number',
-        '#step' => '0.05',
-        '#title' => $this->t('Rate'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_rate,
-        '#attributes' => ['class' => ['expense-rate-input'], 'placeholder' => 'Rate'],
+      // Row Container
+      $form['expenses'][$key] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['grid', 'grid-cols-12', 'gap-4', 'items-center', 'py-3', 'border-b', 'border-gray-100']],
       ];
 
-      // Cell 3: Quantity
-      $form['expenses'][$key]['quantity'] = [
-        '#type' => 'number',
-        '#title' => $this->t('Quantity'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_qty,
-        '#attributes' => ['class' => ['expense-quantity'], 'placeholder' => 'Qty'],
-      ];
-
-      // Cell 4: Total
-      $form['expenses'][$key]['total'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Total'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_total,
-        '#attributes' => ['class' => ['expense-total'], 'readonly' => 'readonly', 'placeholder' => '0.00'],
-      ];
-      
-      // Cell 5: Receipt
-      $form['expenses'][$key]['receipt'] = [
-        '#type' => 'managed_file',
-        '#title' => $this->t('Receipt'),
-        '#title_display' => 'invisible',
-        '#default_value' => $default_receipt,
-        '#upload_location' => 'public://receipts/',
-        '#upload_validators' => [
-          'file_validate_extensions' => ['jpg jpeg png pdf'],
+      // Cell 1: Item Input (3 cols)
+      $form['expenses'][$key]['item_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-3']],
+        'item' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('Description'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_desc,
+          '#attributes' => ['class' => ['expense-type-input', 'w-full', 'rounded-md', 'border-gray-300', 'shadow-sm', 'focus:border-indigo-500', 'focus:ring-indigo-500', 'sm:text-sm'], 'placeholder' => 'Description'],
         ],
-        '#attributes' => ['class' => ['expense-receipt']],
+      ];
+      
+      // Cell 2: Rate Input (2 cols)
+      $form['expenses'][$key]['rate_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+        'rate_col' => [
+          '#type' => 'number',
+          '#step' => '0.05',
+          '#title' => $this->t('Rate'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_rate,
+          '#attributes' => ['class' => ['expense-rate-input', 'w-full', 'rounded-md', 'border-gray-300', 'shadow-sm', 'focus:border-indigo-500', 'focus:ring-indigo-500', 'sm:text-sm'], 'placeholder' => 'Rate'],
+        ],
+      ];
+
+      // Cell 3: Quantity (2 cols)
+      $form['expenses'][$key]['quantity_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+        'quantity' => [
+          '#type' => 'number',
+          '#title' => $this->t('Quantity'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_qty,
+          '#attributes' => ['class' => ['expense-quantity', 'w-full', 'rounded-md', 'border-gray-300', 'shadow-sm', 'focus:border-indigo-500', 'focus:ring-indigo-500', 'sm:text-sm'], 'placeholder' => 'Qty'],
+        ],
+      ];
+
+      // Cell 4: Total (2 cols)
+      $form['expenses'][$key]['total_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+        'total' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('Total'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_total,
+          '#attributes' => ['class' => ['expense-total', 'w-full', 'rounded-md', 'border-gray-300', 'bg-gray-50', 'text-right'], 'readonly' => 'readonly', 'placeholder' => '0.00'],
+        ],
+      ];
+      
+      // Cell 5: Receipt (2 cols)
+      $form['expenses'][$key]['receipt_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-2']],
+        'receipt' => [
+          '#type' => 'managed_file',
+          '#title' => $this->t('Receipt'),
+          '#title_display' => 'invisible',
+          '#default_value' => $default_receipt,
+          '#upload_location' => 'public://receipts/',
+          '#upload_validators' => [
+            'file_validate_extensions' => ['jpg jpeg png pdf'],
+          ],
+          '#attributes' => ['class' => ['expense-receipt', 'text-xs']],
+        ],
+      ];
+
+      // Cell 6: Actions (1 col)
+      $form['expenses'][$key]['actions_wrapper'] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['col-span-1', 'text-center']],
+        'remove' => [
+          '#type' => 'submit',
+          '#value' => 'Remove',
+          '#name' => 'remove_row_' . ($i + 1),
+          '#submit' => ['::removeRow'],
+          '#ajax' => [
+            'callback' => '::addmoreCallback',
+            'wrapper' => 'expenses-table-wrapper',
+          ],
+          '#attributes' => ['class' => ['text-xs', 'text-red-700', 'bg-red-100', 'hover:bg-red-200', 'border', 'border-transparent', 'rounded', 'px-2', 'py-1', 'cursor-pointer']],
+          '#limit_validation_errors' => [],
+        ],
       ];
     }
 
@@ -271,7 +333,7 @@ class ExpenseReportForm extends FormBase {
         'callback' => '::addmoreCallback',
         'wrapper' => 'expenses-table-wrapper',
       ],
-      '#attributes' => ['class' => ['button', 'button--secondary', 'add-expense-button']],
+      '#attributes' => ['class' => ['inline-block', 'px-4', 'py-2', 'border', 'border-transparent', 'text-sm', 'font-medium', 'rounded-md', 'text-indigo-700', 'bg-indigo-100', 'hover:bg-indigo-200', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500', 'cursor-pointer']],
       '#limit_validation_errors' => [], // Don't validate required fields when adding row
     ];
 
@@ -304,6 +366,7 @@ class ExpenseReportForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Save Report'),
       '#button_type' => 'primary',
+      '#attributes' => ['class' => ['w-full', 'block', 'text-center', 'py-2', 'px-4', 'border', 'border-transparent', 'rounded-md', 'shadow-sm', 'text-sm', 'font-medium', 'text-white', 'bg-indigo-600', 'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-indigo-500', 'cursor-pointer']],
     ];
 
     return $form;
@@ -328,6 +391,43 @@ class ExpenseReportForm extends FormBase {
     $count++;
     $form_state->set('custom_row_count', $count);
     $form_state->setRebuild();
+  }
+
+  /**
+   * Submit handler for the "remove-row" button.
+   */
+  public function removeRow(array &$form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    $name = $triggering_element['#name']; // e.g., remove_row_2
+    
+    if (preg_match('/remove_row_(\d+)/', $name, $matches)) {
+      $index_to_remove = intval($matches[1]); // 1-based index
+      
+      // Get current input
+      $input = $form_state->getUserInput();
+      
+      // Shift values
+      $count = $form_state->get('custom_row_count');
+      
+      // Loop from the removed index up to count-1
+      for ($i = $index_to_remove; $i < $count; $i++) {
+        $current_key = 'custom_' . $i;
+        $next_key = 'custom_' . ($i + 1);
+        
+        if (isset($input['expenses'][$next_key])) {
+          $input['expenses'][$current_key] = $input['expenses'][$next_key];
+        }
+      }
+      
+      // Remove the last one
+      $last_key = 'custom_' . $count;
+      unset($input['expenses'][$last_key]);
+      
+      // Update input and count
+      $form_state->setUserInput($input);
+      $form_state->set('custom_row_count', $count - 1);
+      $form_state->setRebuild();
+    }
   }
 
   /**
@@ -367,44 +467,74 @@ class ExpenseReportForm extends FormBase {
     // Create Paragraphs
     $expenses = $values['expenses']; // This is the table array
     
+    $items_to_save = [];
     foreach ($expenses as $key => $row) {
       // Determine Type
       $type = '';
-      // Standard Item: Nested in item[wrapper][type_hidden]
-      if (isset($row['item']['wrapper']['type_hidden'])) {
-        $type = $row['item']['wrapper']['type_hidden'];
-      } 
-      // Custom Item: Direct value in item
-      elseif (isset($row['item']) && is_string($row['item']) && !empty($row['item'])) {
-        $type = $row['item'];
+      
+      // Check type_hidden (Standard)
+      if (isset($row['type_hidden']) && !empty($row['type_hidden'])) {
+        $type = $row['type_hidden'];
+      } elseif (isset($row['item_wrapper']['type_hidden']) && !empty($row['item_wrapper']['type_hidden'])) {
+        $type = $row['item_wrapper']['type_hidden'];
+      }
+      
+      // Check item (Custom)
+      if (empty($type)) {
+        if (isset($row['item']) && !empty($row['item'])) {
+          $type = $row['item'];
+        } elseif (isset($row['item_wrapper']['item']) && !empty($row['item_wrapper']['item'])) {
+          $type = $row['item_wrapper']['item'];
+        }
       }
 
-      // Skip empty custom rows
+      // Skip empty rows
       if (empty($type)) {
         continue;
       }
 
       // Determine Rate
       $rate = 0;
-      // Standard Item: Nested in rate_col[wrapper][rate_hidden]
-      if (isset($row['rate_col']['wrapper']['rate_hidden'])) {
-        $rate = $row['rate_col']['wrapper']['rate_hidden'];
-      } 
-      // Custom Item: Direct value in rate_col
-      elseif (isset($row['rate_col']) && is_numeric($row['rate_col'])) {
+      if (isset($row['rate_hidden']) && $row['rate_hidden'] !== '') {
+        $rate = $row['rate_hidden'];
+      } elseif (isset($row['rate_col']) && $row['rate_col'] !== '') {
         $rate = $row['rate_col'];
+      } elseif (isset($row['rate_wrapper']['rate_hidden']) && $row['rate_wrapper']['rate_hidden'] !== '') {
+        $rate = $row['rate_wrapper']['rate_hidden'];
+      } elseif (isset($row['rate_wrapper']['rate_col']) && $row['rate_wrapper']['rate_col'] !== '') {
+        $rate = $row['rate_wrapper']['rate_col'];
       }
 
-      $quantity = isset($row['quantity']) ? $row['quantity'] : 0;
-      $total = isset($row['total']) ? $row['total'] : 0;
+      // Quantity
+      $quantity = 0;
+      if (isset($row['quantity'])) {
+        $quantity = $row['quantity'];
+      } elseif (isset($row['quantity_wrapper']['quantity'])) {
+        $quantity = $row['quantity_wrapper']['quantity'];
+      }
+
+      // Total
+      $total = 0;
+      if (isset($row['total'])) {
+        $total = $row['total'];
+      } elseif (isset($row['total_wrapper']['total'])) {
+        $total = $row['total_wrapper']['total'];
+      }
       
       // Handle Receipt
       $receipt_fid = null;
-      // Receipt is in 'receipt' column
-      if (isset($row['receipt']) && !empty($row['receipt'])) {
+      $receipt_val = null;
+      
+      if (isset($row['receipt'])) {
+        $receipt_val = $row['receipt'];
+      } elseif (isset($row['receipt_wrapper']['receipt'])) {
+        $receipt_val = $row['receipt_wrapper']['receipt'];
+      }
+
+      if (!empty($receipt_val)) {
         // Managed file returns an array of FIDs
-        if (is_array($row['receipt']) && !empty($row['receipt'][0])) {
-          $receipt_fid = $row['receipt'][0];
+        if (is_array($receipt_val) && !empty($receipt_val[0])) {
+          $receipt_fid = $receipt_val[0];
           // Load file and set permanent
           $file = \Drupal\file\Entity\File::load($receipt_fid);
           if ($file) {
@@ -429,11 +559,20 @@ class ExpenseReportForm extends FormBase {
 
         $paragraph = Paragraph::create($paragraph_values);
         $paragraph->save();
-        $node->get('field_expense_items')->appendItem($paragraph);
+        $items_to_save[] = $paragraph;
       }
     }
 
-    $node->save();
+    if ($node) {
+      $node->setTitle('Spesenabrechnung ' . date('F Y', strtotime($values['date_range_start'])));
+      $node->set('field_date_range', [
+        'value' => $values['date_range_start'],
+        'end_value' => $values['date_range_end'],
+      ]);
+      $node->set('field_total_sum', $values['total_sum']);
+      $node->set('field_expense_items', $items_to_save);
+      $node->save();
+    }
     
     $this->messenger()->addStatus($this->t('Expense report saved successfully.'));
     $form_state->setRedirect('zivi_spesen.dashboard');

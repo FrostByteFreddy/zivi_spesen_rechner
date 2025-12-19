@@ -2,16 +2,51 @@
 /**
  * @file
  * Custom page template for user login.
- * Removes all regions except content.
  */
 #}
-<div class="layout-container">
-  <main role="main">
-    <a id="main-content" tabindex="-1"></a>
-    <div class="layout-content">
-      <div class="region region-content">
-        {{ page.content }}
-      </div>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body {
+    background-image: none !important;
+    background-color: #f3f4f6 !important; /* gray-100 */
+  }
+  #content {
+    display: unset !important;
+  }
+  /* Fix button styles to prevent bold on hover */
+  input[type="submit"], button, .button {
+    font-weight: 500 !important;
+  }
+  input[type="submit"]:hover, button:hover, .button:hover {
+    font-weight: 500 !important;
+  }
+  /* Center form labels */
+  .user-login-form .form-item {
+    text-align: center;
+  }
+  .user-login-form .form-item label {
+    display: block;
+    width: 100%;
+    font-weight: 500;
+    color: #374151; /* gray-700 */
+    margin-bottom: 0.5rem;
+  }
+  /* Keep input text left-aligned but ensure input itself is full width (handled by Tailwind classes) */
+</style>
+
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
+  <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+    <div>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        Zivi Spesen Rechner
+      </h2>
+      <p class="mt-2 text-center text-sm text-gray-600">
+        Please sign in to your account
+      </p>
     </div>
-  </main>
+    
+    <div class="mt-8 space-y-6">
+      {{ page.content }}
+    </div>
+  </div>
 </div>

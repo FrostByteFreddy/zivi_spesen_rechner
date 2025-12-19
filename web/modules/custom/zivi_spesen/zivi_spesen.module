@@ -39,6 +39,9 @@ function zivi_spesen_theme() {
     'expense_report_form' => [
       'render element' => 'form',
     ],
+    'node__spesenabrechnung__pdf' => [
+      'base hook' => 'node',
+    ],
   ];
 }
 
@@ -91,6 +94,16 @@ function zivi_spesen_theme_suggestions_page_alter(array &$suggestions, array $va
   }
 }
 
+/**
+ * Implements hook_theme_suggestions_node_alter().
+ */
+function zivi_spesen_theme_suggestions_node_alter(array &$suggestions, array $variables) {
+  $node = $variables['elements']['#node'];
+  if ($node->getType() === 'spesenabrechnung' && $variables['elements']['#view_mode'] === 'pdf') {
+    $suggestions[] = 'node__spesenabrechnung__pdf';
+  }
+}
+
 
 
 /**
@@ -100,8 +113,13 @@ function zivi_spesen_form_alter(&$form, FormStateInterface $form_state, $form_id
   if ($form_id === 'user_login_form') {
     $form['name']['#attributes']['placeholder'] = t('Username');
     $form['name']['#description'] = '';
+    $form['name']['#attributes']['class'][] = 'appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm';
+    
     $form['pass']['#attributes']['placeholder'] = t('Password');
     $form['pass']['#description'] = '';
+    $form['pass']['#attributes']['class'][] = 'appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm';
+
+    $form['actions']['submit']['#attributes']['class'][] = 'w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500';
     $form['#submit'][] = 'zivi_spesen_user_login_form_submit';
   }
 
@@ -171,125 +189,17 @@ function zivi_spesen_node_create(NodeInterface $node) {
 /**
  * Implements hook_node_presave().
  */
+/**
+ * Implements hook_node_presave().
+ */
 function zivi_spesen_node_presave(NodeInterface $node) {
   if ($node->getType() !== 'spesenabrechnung') {
     return;
   }
 
-  // Rates configuration.
-  $rates = [
-    'taschengeld' => 7.50,
-    'morgenessen' => 4.00,
-    'mittagessen' => 9.00,
-    'nachtessen' => 7.00,
-    'ov_sonstiges' => 6.80,
-  ];
-
-  // Get date range.
-  $date_range = $node->get('field_date_range')->first();
-  if (!$date_range) {
-    return;
-  }
-
-  $start_date = $date_range->get('value')->getDateTime();
-  $end_date = $date_range->get('end_value')->getDateTime();
-
-  // Calculate duration in days (inclusive).
-  $interval = $start_date->diff($end_date);
-  $days = $interval->days + 1;
-
-  // 1. Handle Auto-Generated Items
-  // We want to update existing auto-generated items or create them if missing.
-  // We identify them by 'field_item_type'.
-  
-  $existing_items = $node->get('field_expense_items')->referencedEntities();
-  $auto_types = array_keys($rates);
-  $processed_types = [];
-
-  // Remove existing auto-generated items to regenerate them with fresh calculations
-  // This is simpler than updating in place and ensures correctness if dates change.
-  // However, we must preserve MANUAL items.
-  
-  $manual_items = [];
-  foreach ($existing_items as $paragraph) {
-    $type_value = $paragraph->get('field_item_type')->value;
-    // Map the readable key back if needed, or check if it matches one of our keys (case insensitive or mapped)
-    // Our setup script used keys like 'Taschengeld', 'Morgenessen'.
-    // Let's assume the keys in $rates match the keys stored in field_item_type (which we set up as 'Taschengeld' etc).
-    
-    // Check if this is a standard rate item.
-    $is_standard = false;
-    foreach ($rates as $key => $rate) {
-       // Simple mapping check: 'Taschengeld' matches 'taschengeld' key? 
-       // In setup_config.php we used 'Taschengeld' => 'Taschengeld'.
-       // So we compare against the values we know we generate.
-       $generated_labels = [
-         'Taschengeld', 'Morgenessen', 'Mittagessen', 'Nachtessen', 'OV/Sonstiges'
-       ];
-       if (in_array($type_value, $generated_labels)) {
-         $is_standard = true;
-         break;
-       }
-    }
-
-    if (!$is_standard) {
-      $manual_items[] = $paragraph;
-    } else {
-      // It's an auto-item, we will discard it and regenerate.
-      // Note: If we wanted to keep manual overrides on auto-items, we'd need more complex logic.
-      // Requirement says "Auto-Calculation", implying it follows the dates.
-    }
-  }
-
-  // Clear the field.
-  $node->set('field_expense_items', []);
-
-  // Re-add manual items.
-  foreach ($manual_items as $item) {
-    $node->get('field_expense_items')->appendItem($item);
-  }
-
-  // Generate new standard items.
-  $items_to_create = [
-    'Taschengeld' => $rates['taschengeld'],
-    'Morgenessen' => $rates['morgenessen'],
-    'Mittagessen' => $rates['mittagessen'],
-    'Nachtessen' => $rates['nachtessen'],
-    'OV/Sonstiges' => $rates['ov_sonstiges'],
-  ];
-
-  foreach ($items_to_create as $type => $rate) {
-    $quantity = $days;
-    // Special case: Nachtessen is Total Days - 1
-    if ($type === 'Nachtessen') {
-      $quantity = max(0, $days - 1);
-    }
-
-    $paragraph = Paragraph::create([
-      'type' => 'expense_line_item',
-      'field_item_type' => $type,
-      'field_rate' => $rate,
-      'field_quantity' => $quantity,
-      'field_total_amount' => $rate * $quantity,
-    ]);
-    $paragraph->save();
-    $node->get('field_expense_items')->appendItem($paragraph);
-  }
-
-  // 2. Calculate Total Sum
-  // We need to re-fetch the referenced entities because we just added new ones.
-  // Note: appendItem adds to the list but doesn't immediately make referencedEntities() return the new objects if they aren't saved/reloaded?
-  // Actually, since we saved the paragraphs, they have IDs.
-  
-  $total_sum = 0;
-  $all_items = $node->get('field_expense_items')->referencedEntities();
-  
-  foreach ($all_items as $item) {
-    $amount = $item->get('field_total_amount')->value;
-    $total_sum += $amount;
-  }
-
-  $node->set('field_total_sum', $total_sum);
+  // Logic moved to ExpenseReportForm.php to avoid conflicts.
+  // The form handles full regeneration of items and total calculation.
+  // Keeping this hook empty for now to prevent double-calculation/overwriting.
 }
 
 /**
