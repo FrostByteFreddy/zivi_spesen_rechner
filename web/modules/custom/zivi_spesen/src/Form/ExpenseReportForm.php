@@ -129,13 +129,13 @@ class ExpenseReportForm extends FormBase {
       // Row Container
       $form['expenses'][$key] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['grid', 'grid-cols-12', 'gap-4', 'items-center', 'border-b', 'border-gray-100']],
+        '#attributes' => ['class' => ['grid', 'grid-cols-1', 'md:grid-cols-12', 'gap-4', 'items-center', 'py-4', 'md:py-2', 'border-b', 'border-gray-100']],
       ];
 
       // Cell 1: Item (3 cols)
       $form['expenses'][$key]['item_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-3', 'font-medium', 'text-gray-900']],
+        '#attributes' => ['class' => ['md:col-span-3', 'font-bold', 'md:font-medium', 'text-gray-900', 'text-lg', 'md:text-sm']],
         'label' => ['#markup' => $label],
         'type_hidden' => [
           '#type' => 'hidden',
@@ -147,7 +147,8 @@ class ExpenseReportForm extends FormBase {
       // Cell 2: Rate (2 cols)
       $form['expenses'][$key]['rate_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2', 'text-gray-600']],
+        '#attributes' => ['class' => ['md:col-span-2', 'text-gray-600', 'flex', 'md:block', 'justify-between', 'items-center']],
+        'label' => ['#markup' => '<span class="md:hidden text-xs font-semibold uppercase text-gray-400">Rate:</span>'],
         'display' => ['#markup' => number_format($rate, 2)],
         'rate_hidden' => [
           '#type' => 'hidden',
@@ -159,7 +160,8 @@ class ExpenseReportForm extends FormBase {
       // Cell 3: Quantity (2 cols)
       $form['expenses'][$key]['quantity_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2', 'flex', 'md:block', 'justify-between', 'items-center']],
+        'label' => ['#markup' => '<span class="md:hidden text-xs font-semibold uppercase text-gray-400">Days:</span>'],
         'quantity' => [
           '#type' => 'number',
           '#title' => $this->t('Days'),
@@ -172,7 +174,8 @@ class ExpenseReportForm extends FormBase {
       // Cell 4: Total (2 cols)
       $form['expenses'][$key]['total_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2', 'flex', 'md:block', 'justify-between', 'items-center']],
+        'label' => ['#markup' => '<span class="md:hidden text-xs font-semibold uppercase text-gray-400">Total:</span>'],
         'total' => [
           '#type' => 'textfield',
           '#title' => $this->t('Total'),
@@ -185,13 +188,13 @@ class ExpenseReportForm extends FormBase {
       // Cell 5: Receipt (2 cols) - Empty
       $form['expenses'][$key]['receipt_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2', 'hidden', 'md:block']],
       ];
 
       // Cell 6: Actions (1 col) - Empty
       $form['expenses'][$key]['actions_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-1']],
+        '#attributes' => ['class' => ['md:col-span-1', 'hidden', 'md:block']],
       ];
     }
 
@@ -232,13 +235,13 @@ class ExpenseReportForm extends FormBase {
       // Row Container
       $form['expenses'][$key] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['grid', 'grid-cols-12', 'gap-4', 'items-center', 'py-3', 'border-b', 'border-gray-100']],
+        '#attributes' => ['class' => ['grid', 'grid-cols-1', 'md:grid-cols-12', 'gap-4', 'items-center', 'py-6', 'md:py-3', 'border-b', 'border-gray-100', 'relative']],
       ];
 
       // Cell 1: Item Input (3 cols)
       $form['expenses'][$key]['item_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-3']],
+        '#attributes' => ['class' => ['md:col-span-3']],
         'item' => [
           '#type' => 'textfield',
           '#title' => $this->t('Description'),
@@ -251,7 +254,7 @@ class ExpenseReportForm extends FormBase {
       // Cell 2: Rate Input (2 cols)
       $form['expenses'][$key]['rate_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2']],
         'rate_col' => [
           '#type' => 'number',
           '#step' => '0.05',
@@ -265,7 +268,7 @@ class ExpenseReportForm extends FormBase {
       // Cell 3: Quantity (2 cols)
       $form['expenses'][$key]['quantity_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2']],
         'quantity' => [
           '#type' => 'number',
           '#title' => $this->t('Quantity'),
@@ -278,7 +281,7 @@ class ExpenseReportForm extends FormBase {
       // Cell 4: Total (2 cols)
       $form['expenses'][$key]['total_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2']],
         'total' => [
           '#type' => 'textfield',
           '#title' => $this->t('Total'),
@@ -291,7 +294,7 @@ class ExpenseReportForm extends FormBase {
       // Cell 5: Receipt (2 cols)
       $form['expenses'][$key]['receipt_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-2']],
+        '#attributes' => ['class' => ['md:col-span-2']],
         'receipt' => [
           '#type' => 'managed_file',
           '#title' => $this->t('Receipt'),
@@ -308,7 +311,7 @@ class ExpenseReportForm extends FormBase {
       // Cell 6: Actions (1 col)
       $form['expenses'][$key]['actions_wrapper'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['col-span-1', 'text-center']],
+        '#attributes' => ['class' => ['md:col-span-1', 'absolute', 'top-4', 'right-0', 'md:relative', 'md:top-0']],
         'remove' => [
           '#type' => 'submit',
           '#value' => 'Remove',

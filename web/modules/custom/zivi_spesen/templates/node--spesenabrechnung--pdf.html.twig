@@ -85,17 +85,13 @@
           </tr>
         {% endfor %}
       </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="padding: 12px 12px; text-align: right; font-weight: 600; color: #4b5563; border-top: 2px solid #111827;">Gesamtbetrag</td>
+          <td style="padding: 12px 12px; text-align: right; font-weight: 800; color: #111827; font-size: 15px; border-top: 2px solid #111827;">CHF {{ node.field_total_sum.value|number_format(2, '.', "'") }}</td>
+        </tr>
+      </tfoot>
     </table>
-  </div>
-
-  {# Totals Section #}
-  <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-    <div style="width: 220px;">
-      <div style="display: flex; justify-content: space-between; padding: 10px 14px; background-color: #111827; border-radius: 8px; color: #ffffff;">
-        <span style="font-weight: 600; font-size: 13px;">Gesamtbetrag</span>
-        <span style="font-weight: 800; font-size: 15px;">CHF {{ node.field_total_sum.value|number_format(2, '.', "'") }}</span>
-      </div>
-    </div>
   </div>
 
   {# Footer Note #}

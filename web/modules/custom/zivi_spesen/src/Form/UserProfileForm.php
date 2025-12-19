@@ -29,7 +29,7 @@ class UserProfileForm extends FormBase {
 
     $form['header'] = [
       '#type' => 'container',
-      '#attributes' => ['class' => ['flex justify-between items-center mb-8']],
+      '#attributes' => ['class' => ['flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4']],
     ];
 
     $form['header']['title'] = [
@@ -47,7 +47,7 @@ class UserProfileForm extends FormBase {
 
     $form['profile_card'] = [
       '#type' => 'container',
-      '#attributes' => ['class' => ['bg-white rounded-2xl shadow-xl border border-gray-100 p-8']],
+      '#attributes' => ['class' => ['bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8']],
     ];
 
     $form['profile_card']['field_full_name'] = [
@@ -96,7 +96,7 @@ class UserProfileForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Profil speichern'),
       '#attributes' => [
-        'class' => ['bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg'],
+        'class' => ['w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg'],
       ],
     ];
 
