@@ -20,12 +20,60 @@ zivi_spesen.edit_report:
     _form: '\Drupal\zivi_spesen\Form\ExpenseReportForm'
     _title: "Edit Expense Report"
   requirements:
-    _permission: "edit own spesenabrechnung content"
+    _entity_access: "node.update"
 
 zivi_spesen.profile:
   path: "/dashboard/profile"
   defaults:
     _form: '\Drupal\zivi_spesen\Form\UserProfileForm'
     _title: "Mein Profil"
+  requirements:
+    _permission: "access content"
+
+zivi_spesen.review_report:
+  path: "/dashboard/review/{node}"
+  defaults:
+    _controller: '\Drupal\zivi_spesen\Controller\ReviewController::content'
+    _title: "Abrechnung prüfen"
+  requirements:
+    _entity_access: "node.update"
+
+zivi_spesen.review_pdf:
+  path: "/dashboard/review/pdf/{node}"
+  defaults:
+    _controller: '\Drupal\zivi_spesen\Controller\ReviewController::pdf'
+    _title: "PDF Vorschau"
+  requirements:
+    _entity_access: "node.view"
+
+zivi_spesen.create_zivi:
+  path: "/dashboard/zivi/create"
+  defaults:
+    _form: '\Drupal\zivi_spesen\Form\CreateZiviForm'
+    _title: "Zivi erstellen"
+  requirements:
+    _permission: "edit any spesenabrechnung content"
+
+zivi_spesen.view_report:
+  path: "/dashboard/view/{node}"
+  defaults:
+    _controller: '\Drupal\zivi_spesen\Controller\ReviewController::view'
+    _title: "Abrechnung ansehen"
+  requirements:
+    _entity_access: "node.view"
+
+zivi_spesen.edit_zivi:
+  path: "/dashboard/zivi/edit/{user}"
+  defaults:
+    _form: '\Drupal\zivi_spesen\Form\EditZiviForm'
+    _title: "Zivi bearbeiten"
+  requirements:
+    _permission: "edit any spesenabrechnung content"
+
+zivi_spesen.documentation:
+  path: "/dashboard/anleitung"
+  defaults:
+    _controller: '\Drupal\zivi_spesen\Controller\DocumentationController::view'
+    _title: "Anleitung"
   requirements:
     _permission: "access content"

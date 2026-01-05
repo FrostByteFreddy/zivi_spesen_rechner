@@ -20,6 +20,19 @@ function zivi_spesen_theme() {
         'items' => [],
       ],
     ],
+    'dashboard_editor' => [
+      'variables' => [
+        'items' => [],
+        'create_zivi_url' => NULL,
+      ],
+    ],
+    'documentation' => [
+      'variables' => [
+        'is_editor' => FALSE,
+        'is_zivi' => FALSE,
+        'flow_diagram' => NULL,
+      ],
+    ],
     'page__user__login' => [
       'template' => 'page--user--login',
       'variables' => [
@@ -42,6 +55,19 @@ function zivi_spesen_theme() {
     'node__spesenabrechnung__pdf' => [
       'base hook' => 'node',
     ],
+    'page__review_report' => [
+      'variables' => [
+        'pdf_url' => NULL,
+        'form' => NULL,
+        'node' => NULL,
+      ],
+    ],
+    'page__view_report' => [
+      'variables' => [
+        'pdf_url' => NULL,
+        'node' => NULL,
+      ],
+    ],
   ];
 }
 
@@ -62,7 +88,7 @@ function zivi_spesen_preprocess_page(&$variables) {
   
   // Target Login page and Dashboard
   // Target Login page, Logout Confirm, Dashboard, Add Report, and Edit Report
-  if ($route_name === 'user.login' || $route_name === 'user.logout.confirm' || $route_name === 'zivi_spesen.dashboard' || $route_name === 'zivi_spesen.add_report' || $route_name === 'zivi_spesen.edit_report') {
+  if ($route_name === 'user.login' || $route_name === 'user.logout.confirm' || $route_name === 'zivi_spesen.dashboard' || $route_name === 'zivi_spesen.add_report' || $route_name === 'zivi_spesen.edit_report' || $route_name === 'zivi_spesen.review_report') {
     // Remove regions
     unset($variables['page']['header']);
     unset($variables['page']['primary_menu']);
@@ -92,6 +118,9 @@ function zivi_spesen_theme_suggestions_page_alter(array &$suggestions, array $va
   if ($route_name === 'zivi_spesen.add_report' || $route_name === 'zivi_spesen.edit_report') {
     $suggestions[] = 'page__dashboard'; // Use the same dashboard shell
   }
+  if ($route_name === 'zivi_spesen.review_report' || $route_name === 'zivi_spesen.documentation') {
+    $suggestions[] = 'page__dashboard'; // Use dashboard shell
+  }
 }
 
 /**
@@ -104,6 +133,15 @@ function zivi_spesen_theme_suggestions_node_alter(array &$suggestions, array $va
   }
 }
 
+/**
+ * Implements hook_entity_print_view_mode_alter().
+ */
+function zivi_spesen_entity_print_view_mode_alter(&$view_mode, \Drupal\Core\Entity\EntityInterface $entity, $export_type) {
+  if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'spesenabrechnung') {
+    $view_mode = 'pdf';
+  }
+}
+
 
 
 /**
@@ -111,16 +149,21 @@ function zivi_spesen_theme_suggestions_node_alter(array &$suggestions, array $va
  */
 function zivi_spesen_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if ($form_id === 'user_login_form') {
-    $form['name']['#attributes']['placeholder'] = t('Username');
+    $form['name']['#attributes']['placeholder'] = t('Benutzername');
     $form['name']['#description'] = '';
     $form['name']['#attributes']['class'][] = 'appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm';
     
-    $form['pass']['#attributes']['placeholder'] = t('Password');
+    $form['pass']['#attributes']['placeholder'] = t('Passwort');
     $form['pass']['#description'] = '';
     $form['pass']['#attributes']['class'][] = 'appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm';
 
-    $form['actions']['submit']['#attributes']['class'][] = 'w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500';
+    $form['actions']['submit']['#attributes']['class'][] = 'btn-primary w-full flex justify-center py-2 px-4 shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500';
     $form['#submit'][] = 'zivi_spesen_user_login_form_submit';
+  }
+
+  if ($form_id === 'user_logout_confirm') {
+    $form['actions']['submit']['#attributes']['class'][] = 'btn-primary';
+    $form['actions']['cancel']['#attributes']['class'][] = 'btn-secondary';
   }
 
   if ($form_id === 'node_spesenabrechnung_form' || $form_id === 'node_spesenabrechnung_edit_form') {
@@ -132,6 +175,21 @@ function zivi_spesen_form_alter(&$form, FormStateInterface $form_state, $form_id
       '#markup' => '<div id="spesen-preview" class="spesen-preview"></div>',
       '#weight' => 10,
     ];
+  }
+}
+
+/**
+ * Implements hook_preprocess_input().
+ */
+function zivi_spesen_preprocess_input(&$variables) {
+  // Target the logout confirm submit button.
+  // We can check the route or the element properties.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name === 'user.logout.confirm' && isset($variables['element']['#type']) && $variables['element']['#type'] === 'submit') {
+    // Remove default classes.
+    if (isset($variables['attributes']['class'])) {
+      $variables['attributes']['class'] = array_diff($variables['attributes']['class'], ['button', 'button--primary']);
+    }
   }
 }
 
@@ -207,4 +265,164 @@ function zivi_spesen_node_presave(NodeInterface $node) {
  */
 function zivi_spesen_user_login_form_submit($form, FormStateInterface $form_state) {
   $form_state->setRedirect('zivi_spesen.dashboard');
+}
+
+/**
+ * Implements hook_mail().
+ */
+function zivi_spesen_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'editor_comment':
+      $message['from'] = \Drupal::config('system.site')->get('mail');
+      $message['subject'] = t('Neuer Kommentar zu deiner Spesenabrechnung');
+      $message['body'][] = $params['message'];
+      break;
+      
+    case 'status_change':
+      $message['from'] = \Drupal::config('system.site')->get('mail');
+      $node = $params['node'];
+      $status = $params['status'];
+      $account = $params['account'];
+      $url = $node->toUrl('canonical', ['absolute' => TRUE])->toString();
+      
+      if ($status === 'submitted') {
+        $message['subject'] = t('Neue Spesenabrechnung eingereicht: @title', ['@title' => $node->getTitle()]);
+        $message['body'][] = t('Hallo @name,', ['@name' => $account->getAccountName()]);
+        $message['body'][] = t('Eine neue Spesenabrechnung wurde von @zivi eingereicht.', ['@zivi' => $node->getOwner()->getDisplayName()]);
+        $message['body'][] = t('Du kannst sie hier prüfen: @url', ['@url' => $url]);
+      } elseif ($status === 'change_requested') {
+        $message['subject'] = t('Änderungen angefordert: @title', ['@title' => $node->getTitle()]);
+        $message['body'][] = t('Hallo @name,', ['@name' => $account->getAccountName()]);
+        $message['body'][] = t('Für deine Spesenabrechnung wurden Änderungen angefordert.');
+        if ($node->hasField('field_editor_comment') && !empty($node->get('field_editor_comment')->value)) {
+          $message['body'][] = t('Kommentar des Editors:');
+          $message['body'][] = $node->get('field_editor_comment')->value;
+        }
+        $message['body'][] = t('Bitte aktualisiere deine Abrechnung hier: @url', ['@url' => $url]);
+      } elseif ($status === 'approved') {
+        $message['subject'] = t('Spesenabrechnung genehmigt: @title', ['@title' => $node->getTitle()]);
+        $message['body'][] = t('Hallo @name,', ['@name' => $account->getAccountName()]);
+        $message['body'][] = t('Deine Spesenabrechnung wurde genehmigt.');
+        $message['body'][] = t('Du kannst sie hier ansehen: @url', ['@url' => $url]);
+      }
+      break;
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function zivi_spesen_node_update(NodeInterface $node) {
+  if ($node->getType() !== 'spesenabrechnung') {
+    return;
+  }
+
+  // Check if status has changed.
+  if ($node->hasField('field_status') && $node->original->hasField('field_status')) {
+    $original_status = $node->original->get('field_status')->value;
+    $new_status = $node->get('field_status')->value;
+
+    if ($new_status !== $original_status) {
+      $mailManager = \Drupal::service('plugin.manager.mail');
+      $module = 'zivi_spesen';
+      $key = 'status_change';
+      $params = ['node' => $node, 'status' => $new_status];
+      $langcode = \Drupal::currentUser()->getPreferredLangcode();
+      $send = TRUE;
+
+      // 1. Submitted -> Notify Editor(s)
+      if ($new_status === 'submitted') {
+        // Find editors
+        $query = \Drupal::entityQuery('user')
+          ->condition('status', 1)
+          ->condition('roles', 'editor')
+          ->accessCheck(FALSE);
+        $uids = $query->execute();
+        $editors = \Drupal\user\Entity\User::loadMultiple($uids);
+
+        foreach ($editors as $editor) {
+          $to = $editor->getEmail();
+          $params['account'] = $editor;
+          $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
+        }
+      }
+      // 2. Change Requested / Approved -> Notify Zivi
+      elseif ($new_status === 'change_requested' || $new_status === 'approved') {
+        $zivi_uid = $node->getOwnerId();
+        $zivi = \Drupal\user\Entity\User::load($zivi_uid);
+        if ($zivi) {
+          $to = $zivi->getEmail();
+          $params['account'] = $zivi;
+          $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
+        }
+      }
+    }
+  }
+
+  // Check if editor comment has changed (only if not covered by status change logic, or separate?)
+  // If status changed to "Change Requested", we probably sent the comment in that email?
+  // Let's keep comment notification separate or merge?
+  // If status changed, we send status email.
+  // If ONLY comment changed (without status change), we send comment email.
+  
+  if (!$node->original->hasField('field_editor_comment') || !$node->hasField('field_editor_comment')) {
+    return;
+  }
+
+  $original_comment = $node->original->get('field_editor_comment')->value;
+  $new_comment = $node->get('field_editor_comment')->value;
+
+  // Only send comment email if status did NOT change (to avoid double emails)
+  // Or if status changed to something other than Change Requested?
+  // Actually, usually comment comes WITH Change Requested.
+  // Let's simplify:
+  // If Status Changed -> Send Status Email (include comment if applicable)
+  // If Status NOT Changed AND Comment Changed -> Send Comment Email.
+  
+  $status_changed = ($node->hasField('field_status') && $node->original->hasField('field_status') && $node->get('field_status')->value !== $node->original->get('field_status')->value);
+
+  if (!$status_changed && $new_comment !== $original_comment && !empty($new_comment)) {
+    // Send email to Zivi.
+    $zivi_uid = $node->get('field_zivi_ref')->target_id; // Wait, field_zivi_ref or owner?
+    // In DashboardController we used getOwnerId(). Let's stick to that.
+    $zivi_uid = $node->getOwnerId();
+    
+    if ($zivi_uid) {
+      $zivi_user = \Drupal\user\Entity\User::load($zivi_uid);
+      if ($zivi_user) {
+        $mailManager = \Drupal::service('plugin.manager.mail');
+        $module = 'zivi_spesen';
+        $key = 'editor_comment';
+        $to = $zivi_user->getEmail();
+        $params['message'] = t('Hello @name,', ['@name' => $zivi_user->getAccountName()]) . "\n\n" .
+          t('An editor has added a comment to your expense report "@title":', ['@title' => $node->getTitle()]) . "\n\n" .
+          $new_comment . "\n\n" .
+          t('You can view your report here: @url', ['@url' => $node->toUrl('canonical', ['absolute' => TRUE])->toString()]);
+        $langcode = $zivi_user->getPreferredLangcode();
+        $send = TRUE;
+
+        $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
+        if ($result['result'] !== TRUE) {
+          \Drupal::logger('zivi_spesen')->error('There was a problem sending your email notification to @email.', ['@email' => $to]);
+        }
+        else {
+          \Drupal::logger('zivi_spesen')->notice('Email notification sent to @email.', ['@email' => $to]);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function zivi_spesen_node_access(NodeInterface $node, $op, \Drupal\Core\Session\AccountInterface $account) {
+  if ($node->getType() === 'spesenabrechnung') {
+    if (in_array('editor', $account->getRoles())) {
+      if ($op === 'view' || $op === 'update') {
+        return \Drupal\Core\Access\AccessResult::allowed();
+      }
+    }
+  }
+  return \Drupal\Core\Access\AccessResult::neutral();
 }

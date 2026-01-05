@@ -9,6 +9,85 @@ body {
   padding: 0;
 }
 
+/* --- Button Standardization --- */
+/* --- Button Standardization --- */
+.btn-primary {
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0.75rem 2rem !important;
+  border: 1px solid transparent !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; /* shadow-lg */
+  color: white !important;
+  background-color: #2563eb !important; /* blue-600 */
+  background-image: none !important;
+  transition: all 0.2s !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  line-height: 1.5 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8 !important; /* blue-700 */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04) !important; /* shadow-xl */
+  color: white !important;
+  text-decoration: none !important;
+}
+
+.btn-primary:focus {
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3b82f6 !important; /* ring-blue-500 */
+}
+
+.btn-secondary {
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0.75rem 1.5rem !important;
+  border: 1px solid #d1d5db !important; /* gray-300 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  color: #374151 !important; /* gray-700 */
+  background-color: white !important;
+  background-image: none !important;
+  transition: all 0.2s !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  line-height: 1.5 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb !important; /* gray-50 */
+  color: #374151 !important;
+  text-decoration: none !important;
+}
+
+.btn-secondary:focus {
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3b82f6 !important; /* ring-blue-500 */
+}
+
+/* --- Logout Confirmation Page --- */
+.user-logout-confirm .form-actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+  margin-top: 2rem !important;
+}
+
 /* --- Login Page Styling --- */
 /* We target the specific body classes added by Drupal */
 body.path-user.user-logged-out {
@@ -131,17 +210,19 @@ body.path-user.user-logged-out .button--primary {
   border-radius: 0.5rem !important;
   color: #fff !important;
   cursor: pointer !important;
-  transition: background-color 0.15s ease-in-out, transform 0.1s ease !important;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
   text-decoration: none !important;
 }
 
 body.path-user.user-logged-out .button--primary:hover {
   background-color: #4338ca !important; /* Indigo 700 */
-  transform: translateY(-1px);
+  transform: none !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
 }
 
 body.path-user.user-logged-out .button--primary:active {
-  transform: translateY(0);
+  transform: none !important;
 }
 
 /* Hide extra Drupal links if they sneak in */
@@ -364,4 +445,20 @@ body.path-dashboard .region-content {
   border-radius: 1rem !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+#edit-actions {
+  justify-content: center;
+  gap: 1rem;
+  align-items: center;
+}
+
+#block-olivero-content {
+  margin-bottom: 0 !important;
+}
+
+#edit-submit,
+#edit-cancel {
+  margin-right: 0 !important;
+  width: 100%;
 }

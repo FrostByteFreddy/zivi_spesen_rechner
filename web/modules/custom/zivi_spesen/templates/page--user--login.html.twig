@@ -13,25 +13,15 @@
   #content {
     display: unset !important;
   }
-  /* Fix button styles to prevent bold on hover */
-  input[type="submit"], button, .button {
-    font-weight: 500 !important;
-  }
-  input[type="submit"]:hover, button:hover, .button:hover {
-    font-weight: 500 !important;
-  }
+
   /* Center form labels */
   .user-login-form .form-item {
     text-align: center;
   }
+
   .user-login-form .form-item label {
-    display: block;
-    width: 100%;
-    font-weight: 500;
-    color: #374151; /* gray-700 */
-    margin-bottom: 0.5rem;
+    display: none !important;
   }
-  /* Keep input text left-aligned but ensure input itself is full width (handled by Tailwind classes) */
 </style>
 
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
@@ -41,7 +31,7 @@
         Zivi Spesen Rechner
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
-        Please sign in to your account
+        Bitte melden Sie sich an
       </p>
     </div>
     

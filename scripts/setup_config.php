@@ -75,10 +75,14 @@ create_field('node', 'spesenabrechnung', 'field_status', 'list_string', 'Status'
 ]);
 create_field('node', 'spesenabrechnung', 'field_zivi_ref', 'entity_reference', 'Zivi', ['target_type' => 'user']);
 create_field('node', 'spesenabrechnung', 'field_total_sum', 'decimal', 'Total Sum');
+create_field('node', 'spesenabrechnung', 'field_editor_comment', 'string_long', 'Editor Comment');
 
 // 5. Fields for User
 create_field('user', 'user', 'field_iban', 'string', 'IBAN');
 create_field('user', 'user', 'field_address', 'string_long', 'Address');
+create_field('user', 'user', 'field_full_name', 'string', 'Full Name');
+create_field('user', 'user', 'field_service_start', 'datetime', 'Erster Einsatztag', ['datetime_type' => 'date']);
+create_field('user', 'user', 'field_service_end', 'datetime', 'Letzter Einsatztag', ['datetime_type' => 'date']);
 
 // Entity Reference Revisions for Paragraphs
 if (!FieldStorageConfig::loadByName('node', 'field_expense_items')) {
@@ -86,9 +90,18 @@ if (!FieldStorageConfig::loadByName('node', 'field_expense_items')) {
     'field_name' => 'field_expense_items',
     'entity_type' => 'node',
     'type' => 'entity_reference_revisions',
+    'cardinality' => -1,
     'settings' => ['target_type' => 'paragraph'],
   ])->save();
-  echo "Created Storage: field_expense_items\n";
+  echo "Created Storage: field_expense_items (unlimited)\n";
+} else {
+  // Update existing storage if needed
+  $storage = FieldStorageConfig::loadByName('node', 'field_expense_items');
+  if ($storage->getCardinality() != -1) {
+    $storage->setCardinality(-1);
+    $storage->save();
+    echo "Updated Storage: field_expense_items to unlimited cardinality\n";
+  }
 }
 if (!FieldConfig::loadByName('node', 'spesenabrechnung', 'field_expense_items')) {
   FieldConfig::create([
@@ -107,6 +120,24 @@ if (!FieldConfig::loadByName('node', 'spesenabrechnung', 'field_expense_items'))
 // 5. Configure Form Displays
 $entity_display_repository = \Drupal::service('entity_display.repository');
 
+// Ensure 'pdf' view mode exists for nodes
+use Drupal\Core\Entity\Entity\EntityViewMode;
+if (!EntityViewMode::load('node.pdf')) {
+  EntityViewMode::create([
+    'id' => 'node.pdf',
+    'label' => 'PDF',
+    'targetEntityType' => 'node',
+  ])->save();
+  echo "Created View Mode: node.pdf\n";
+}
+
+// Enable 'pdf' view mode for spesenabrechnung
+$view_display = $entity_display_repository->getViewDisplay('node', 'spesenabrechnung', 'pdf');
+if ($view_display->isNew()) {
+  $view_display->setStatus(TRUE)->save();
+  echo "Enabled PDF view mode for spesenabrechnung\n";
+}
+
 // Form Display for Paragraph
 $form_display = $entity_display_repository->getFormDisplay('paragraph', 'expense_line_item');
 $form_display->setComponent('field_item_type', ['type' => 'options_select'])
@@ -124,6 +155,7 @@ $form_display->setComponent('field_date_range', ['type' => 'daterange_default'])
   ->setComponent('field_zivi_ref', ['type' => 'entity_reference_autocomplete'])
   ->setComponent('field_status', ['type' => 'options_select'])
   ->setComponent('field_expense_items', ['type' => 'entity_reference_paragraphs'])
+  ->setComponent('field_editor_comment', ['type' => 'string_textarea'])
   ->removeComponent('field_total_sum') // Hide total sum from form, calculated automatically
   ->save();
 
@@ -131,6 +163,8 @@ $form_display->setComponent('field_date_range', ['type' => 'daterange_default'])
 $form_display = $entity_display_repository->getFormDisplay('user', 'user');
 $form_display->setComponent('field_iban', ['type' => 'string_textfield'])
   ->setComponent('field_address', ['type' => 'string_textarea'])
+  ->setComponent('field_service_start', ['type' => 'datetime_default'])
+  ->setComponent('field_service_end', ['type' => 'datetime_default'])
   ->save();
 
 // 6. Create Roles and Permissions
@@ -149,8 +183,35 @@ if (!Role::load('zivi')) {
     'create spesenabrechnung content',
     'edit own spesenabrechnung content',
     'delete own spesenabrechnung content',
+    'access content',
+    'entity print access bundle spesenabrechnung',
+    'entity print access type node',
   ]);
   echo "Granted permissions to zivi role.\n";
 }
+
+if (!Role::load('editor')) {
+  $role = Role::create([
+    'id' => 'editor',
+    'label' => 'Editor',
+  ]);
+  $role->save();
+  echo "Created Role: editor\n";
+
+  // Grant permissions
+  user_role_grant_permissions('editor', [
+    'access content',
+    'edit any spesenabrechnung content',
+    'entity print access bundle spesenabrechnung',
+    'entity print access type node',
+  ]);
+  echo "Granted permissions to editor role.\n";
+}
+
+// Ensure administrator has all permissions
+user_role_grant_permissions('administrator', [
+  'bypass entity print access',
+  'administer entity print',
+]);
 
 echo "Configuration Complete.\n";

@@ -1,0 +1,5 @@
+services:
+  zivi_spesen.redirect_subscriber:
+    class: Drupal\zivi_spesen\EventSubscriber\RedirectSubscriber
+    tags:
+      - { name: event_subscriber }

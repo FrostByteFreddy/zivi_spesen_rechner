@@ -21,8 +21,6 @@
 
       // Main update function.
       function updateCalculations() {
-        // Date fields are in the header, so we must search globally, not just in context
-        // because context might be an AJAX fragment (new row).
         const startVal = $(".expense-date-start").val();
         const endVal = $(".expense-date-end").val();
 
@@ -33,33 +31,68 @@
 
         if (endDate < startDate) return;
 
-        const days = calculateDays(startDate, endDate);
+        const serviceStartVal = drupalSettings.zivi_spesen.service_start;
+        const serviceEndVal = drupalSettings.zivi_spesen.service_end;
 
-        // Iterate over each "row" (which is now a grid container)
-        // We can identify rows by looking for the quantity input
+        const serviceStartDate = serviceStartVal
+          ? parseDate(serviceStartVal)
+          : null;
+        const serviceEndDate = serviceEndVal ? parseDate(serviceEndVal) : null;
+
+        // Iterate over each "row"
         $(".expense-quantity", context).each(function () {
           const $qtyInput = $(this);
-          const $row = $qtyInput.closest(".grid"); // Tailwind grid container
-
-          // Check if it's a standard row (has hidden type input)
+          const $row = $qtyInput.closest(".grid");
           const $typeInput = $row.find(".expense-type");
 
           if ($typeInput.length) {
-            // Standard Row: Update Quantity automatically
-            // User requested: "always set the quantity to the length of the month"
-            // So we set it to 'days' for ALL standard items.
-            $qtyInput.val(days);
+            const type = $typeInput.val(); // e.g., "Morgenessen"
+            let allowedDays = 0;
+
+            // Loop through each day in the range and check if the item is allowed
+            let current = new Date(startDate);
+            while (current <= endDate) {
+              let isAllowed = true;
+
+              // Check if day is within service period
+              if (serviceStartDate && current < serviceStartDate) {
+                isAllowed = false;
+              }
+              if (serviceEndDate && current > serviceEndDate) {
+                isAllowed = false;
+              }
+
+              // Special exclusions on first/last day
+              if (isAllowed) {
+                if (
+                  serviceStartDate &&
+                  current.getTime() === serviceStartDate.getTime()
+                ) {
+                  // First day: No breakfast
+                  if (type === "Morgenessen") isAllowed = false;
+                }
+
+                if (
+                  serviceEndDate &&
+                  current.getTime() === serviceEndDate.getTime()
+                ) {
+                  // Last day: No dinner
+                  if (type === "Nachtessen") isAllowed = false;
+                }
+              }
+
+              if (isAllowed) allowedDays++;
+              current.setDate(current.getDate() + 1);
+            }
+
+            $qtyInput.val(allowedDays);
 
             // Update Total
             const rate = parseFloat($row.find(".expense-rate").val());
-            const total = (days * rate).toFixed(2);
+            const total = (allowedDays * rate).toFixed(2);
             $row.find(".expense-total").val(total);
           } else {
-            // Custom Row: Just re-calculate total based on current inputs (don't auto-set qty)
-            // Unless we want to? "Can we always set the quntity to the length of the month?"
-            // Usually custom rows are for specific things like "Train Ticket" (qty 1).
-            // So we should probably ONLY auto-update standard rows.
-
+            // Custom Row: Just re-calculate total
             const $rateInput = $row.find(".expense-rate-input");
             if ($rateInput.length) {
               const rate = parseFloat($rateInput.val()) || 0;
